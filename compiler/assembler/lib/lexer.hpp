@@ -15,40 +15,21 @@ const int SUCCESS = 1;
 const int ERROR = 0;
 const int NOT_FOUND = -1;
 
-typedef vector<pair<int, string>> token;
+typedef vector<pair<string, string>> token;
 typedef unsigned int u32;
 
-
+/*
 struct mapping_t{
   vector<int> ROM;
   vector<int> RAM;
   vector<int> DATA;
 };
-
-
-
-
-
-
+*/
 
 class Lexer{
-
-  static constexpr auto gen_token = [] (auto tc){
-    constexpr int N = tc.size();
-    array<pair<int, const char*>, N> t;
-    int id = 0;
-    for (const char* it:tc){
-      t[id] = pair<int, const char*>{id, it};
-      id++;
-    }
-    return t;
-  };
-
-
-  static constexpr auto identifiers = experimental::make_array("void", "int", " ", "{", "}", "(", ")", ";", "<number>", "=", "+", "-", "*", "/");
+  static constexpr auto identifiers = experimental::make_array("void", "int", " ", "{", "}", "(", ")", ";", "<NUMBER>", "=", "+", "-", "*", "/");
 
   protected:
-    static constexpr auto identifiers_token = gen_token(identifiers);
     token local_token;
 
   private:
@@ -66,10 +47,10 @@ class Lexer{
       return true;
     }
 
-    bool is_valid_identifier(const string &msg, pair<int, string> &id){
-      for (auto &search_obj:identifiers_token){
-        if (is_same_string(msg, search_obj.second)){
-          id = search_obj;
+    bool is_valid_identifier(const string &msg, pair<string, string> &id){
+      for (const auto &search_obj:identifiers){
+        if (is_same_string(msg, search_obj)){
+          id = {search_obj, search_obj};
           return true;
         }
       }
@@ -77,7 +58,7 @@ class Lexer{
     }
 
     int distance_to_next_token(string &msg){
-      pair<int,string> tmp;
+      pair<string,string> tmp;
       for (u32 i=0; i<msg.size(); i++){
         const string offset_string = msg.substr(i);
         if (is_valid_identifier(offset_string,tmp))
@@ -94,35 +75,30 @@ class Lexer{
       return true;
     }
 
-    static constexpr int get_ID_from_name(const string &name){
-      for (auto &it:identifiers_token){
-        if (name == it.second)
-          return it.first;
+    pair<string, string> handle_undefined_token(string &msg){
+      const int distance = distance_to_next_token(msg);
+      const string message = msg.substr(0, distance);
+      const string ID_name =  (is_number(message)) ? "<NUMBER>" : "<NOT FOUND>";
+      return {ID_name, message};
+    }
+
+    void handle_token(string &msg){
+      pair<string, string> item;
+      if (not is_valid_identifier(msg,item)){
+        item = handle_undefined_token(msg);
       }
-      return NOT_FOUND;
+      msg.erase(0, item.second.size());
+      local_token.push_back(item);
     }
 
     int tokenize(string msg){
       int timeout = msg.size();
-
       while (msg.size()>0){
-        pair<int, string> item;
-        if (not is_valid_identifier(msg,item)){
-          const int distance = distance_to_next_token(msg);
-
-          int ID_name = NOT_FOUND;
-          const string message = msg.substr(0, distance);
-          if (is_number(message)){
-            ID_name = get_ID_from_name("<number>");
-          }
-          item = {ID_name, message};
-        }
-        msg.erase(0, item.second.size());
-        local_token.push_back(item);
         if (not timeout--){
           cout << "KILLED\n";
           break;
         }
+        handle_token(msg);
       }
       return SUCCESS;
     }
