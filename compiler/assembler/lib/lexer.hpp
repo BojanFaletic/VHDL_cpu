@@ -33,10 +33,6 @@ class Lexer{
     token local_token;
 
   private:
-    bool is_potencial_candidate(const string &msg, const string &search){
-      return (msg.size() >= search.size()) ? true : false;
-    }
-
     bool is_same_string(const string &msg, const string &pattern){
       if (msg.size() < pattern.size())
         return false;

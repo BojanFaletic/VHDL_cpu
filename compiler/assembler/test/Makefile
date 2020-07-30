@@ -2,10 +2,20 @@ CC=g++
 CFLAGS=--std=c++20 -Wall -Wextra -g
 
 
-MAIN_FILE = parser
+PARSER_FILE = parser
+LEXER_FILE = lexer
 
 INCLUDE_PATHS = ../lib
 
+.SILENT:all
+
 all:
-	$(CC) $(CFLAGS) $(MAIN_FILE).cpp -I$(INCLUDE_PATHS) -o $(MAIN_FILE)
+	make PARSER
+	make LEXER
+
+PARSER:
+		$(CC) $(CFLAGS) $(PARSER_FILE).cpp -I$(INCLUDE_PATHS) -o $(PARSER_FILE)
+
+LEXER:
+		$(CC) $(CFLAGS) $(LEXER_FILE).cpp -I$(INCLUDE_PATHS) -o $(LEXER_FILE)
 
