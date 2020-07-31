@@ -22,13 +22,13 @@ class Parser {
     vector<token> list_of_all_expressions;
     operation all_operations;
 
-    bool is_vector_equal(const auto &v1, const auto &v2, const int v2_offset = 0){
-      if (v1.size() != v2.size())
+    bool is_vector_equal(const vector<string> &expression, const vector<string> &pattern,
+        const int expression_offset = 0){
+
+      if (expression.size()-expression_offset < pattern.size())
         return false;
-      if (v2.size()-v2_offset < v1.size())
-        return false;
-      for (unsigned int i=0; i<v1.size(); i++){
-        if (v1[i] != v2[i])
+      for (unsigned int i=0; i<pattern.size(); i++){
+        if (expression[i+expression_offset] != pattern[i])
           return false;
       }
       return true;
@@ -57,35 +57,52 @@ class Parser {
     }
 
     int number_of_function_parameters(vector<string> &parameters){
-      const vector<string> parameter_template = {"int", " ", "<NOT FOUND>"};
+      const vector<string> parameter_template_one = {"int", " ", "<NOT FOUND>"};
+      const vector<string> parameter_template_many = {",", " ", "int", " ", "<NOT FOUND>"};
       int num_of_args = 0;
-      for (unsigned int i=0; i<parameters.size(); i+= parameter_template.size()){
-        if (is_vector_equal(parameter_template, parameters, i)){
+
+      auto calculate_numer_of_elements = [&](int num_of_args){
+        return parameter_template_one.size() + parameter_template_many.size()*(num_of_args-1);
+      };
+
+
+      if (is_vector_equal(parameters, parameter_template_one,0)){
+        num_of_args++;
+      }
+      else{
+        return 0;
+      }
+
+      for (size_t i=parameter_template_one.size(); i<parameters.size(); i+= parameter_template_many.size()){
+        if (is_vector_equal(parameters, parameter_template_many, i)){
           num_of_args++;
         }
         else{
+          parameters.erase(parameters.begin(),
+              parameters.begin()+calculate_numer_of_elements(num_of_args));
           return num_of_args;
         }
       }
-      return num_of_args;
+      return 0;
     }
 
 
     bool is_function_declearation(vector<string> t, string &expression_name){
-      const vector<vector<string>> assiment_seq{{"int", " ", "<NOT FOUND>", "(", "int", " ", "<NOT FOUND>", ")", ";"}};
-
-
       const vector<vector<string>> assiment_seq_start{{"int", " ", "<NOT FOUND>", "("}};
       const vector<vector<string>> assiment_seq_stop{{")", ";"}};
+      const size_t min_number_of_function_param = assiment_seq_start[0].size() + assiment_seq_stop[0].size();
 
       bool is_valid;
+      if (t.size() < min_number_of_function_param){
+        return false;
+      }
 
       int number_of_parameters = 0;
 
       if (is_valid_expression(t, assiment_seq_start)){
-        t.erase(t.begin(), t.begin()+assiment_seq_start.size());
+        t.erase(t.begin(), t.begin()+assiment_seq_start[0].size());
         number_of_parameters = number_of_function_parameters(t);
-        t.erase(t.begin(), t.begin()+3*number_of_parameters);
+
         if (is_valid_expression(t, assiment_seq_stop)){
           is_valid = true;
         }
@@ -97,18 +114,18 @@ class Parser {
         is_valid = false;
       }
 
-
-      expression_name = "<FUNCTION DECLARATION>";
-      expression_name += "<";
+      expression_name = "<FUNCTION DECLARATION ";
       expression_name += to_string(number_of_parameters);
-      expression_name += ">";
+      expression_name += " >";
       return is_valid;
     }
 
 
     int standardize_expression(){
       for (auto &expression:list_of_all_expressions){
+        handle_space(expression);
       }
+      return SUCCESS;
     }
 
     void split_to_expressions(const token &list_of_all_tokens){
@@ -124,10 +141,59 @@ class Parser {
       }
     }
 
+    bool is_check_rule(const pair<string,string> &token_ids, const token &rules){
+      for (const pair<string, string> &rule:rules){
+        if (token_ids == rule){
+          return true;
+        }
+      }
+      return false;
+    }
+
+    bool is_not_check_rule(const pair<string,string> &token_ids, const token &rules){
+      for (const pair<string, string> &rule:rules){
+        if (token_ids != rule){
+          return true;
+        }
+      }
+      return false;
+    }
+
+
+    bool is_space_needed(pair<string, string> &current_pair, pair<string,string> &next_pair){
+      const token rules = {{" ", " "}};
+
+      const pair<string,string> rule_idx = {current_pair.first, next_pair.first};
+      return (!is_not_check_rule(rule_idx, rules));
+    }
+
+    bool is_exess_space(pair<string, string> &current_pair, pair<string,string> &next_pair){
+      const token rules = {{" ", " "}, {" ", ";"}};
+      const pair<string,string> rule_idx = {current_pair.first, next_pair.first};
+      return is_check_rule(rule_idx, rules);
+    }
+
+    void handle_space(token &t){
+      const pair<string, string> space_symbol = {" ", " "};
+
+      for (unsigned int idx = 0; idx < t.size()-1; idx++){
+        if (is_space_needed(t[idx], t[idx+1])){
+          auto it = t.begin() + idx;
+          t.insert(it, space_symbol);
+          idx++;
+        }
+        if (is_exess_space(t[idx], t[idx+1])){
+          auto it = t.begin() + idx;
+          t.erase(it);
+        }
+      }
+    }
+
   public:
     Parser(string program){
       Lexer lexer(program);
       split_to_expressions(lexer.local_token);
+      standardize_expression();
     }
 
     int generate_operations(){
@@ -187,29 +253,6 @@ class Parser {
         ret_value.push_back(ob.first);
       }
       return ret_value;
-    }
-
-
-    bool is_space_needed(pair<string, string> &current_pair, pair<string,string> &next_pair){
-      if (current_pair.first != " " && next_pair.first != " "){
-        if (current_pair.first == "int" && next_pair.first == "int")
-          return false;
-        else
-          return true;
-      }
-      return false;
-    }
-
-    void insert_space(token &t){
-      const pair<string, string> space_symbol = {" ", " "};
-
-      for (unsigned int idx = 0; idx < t.size()-1; idx++){
-        if (is_space_needed(t[idx], t[idx+1])){
-          auto it = t.begin() + idx;
-          t.insert(it, space_symbol);
-          idx++;
-        }
-      }
     }
 
 };

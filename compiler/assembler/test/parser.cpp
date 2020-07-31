@@ -26,14 +26,40 @@ bool handle_test_result(T &output, U &expected,
 }
 
 bool test_function(){
+  int test_scoreboard = 0;
+
+
+  // test 1 argument
+  {
   Parser p("int a(int v);");
   p.generate_operations();
   auto res = p.operations();
 
-  const vector<string> expects{"<FUNCTION DECLARATION>"};
+  vector<string> expects{"<FUNCTION DECLARATION 1 >"};
+  test_scoreboard += handle_test_result(res, expects, p) ? 1 : 0;
+  }
 
-  return handle_test_result(res, expects, p);
+  {
+  // test 2 arguments
+  Parser p("int a(int v, int b);");
+  p.generate_operations();
+  auto res = p.operations();
 
+  vector<string> expects{"<FUNCTION DECLARATION 2 >"};
+  test_scoreboard += handle_test_result(res, expects, p) ? 1 : 0;
+  }
+
+  {
+  // test 3 arguments
+  Parser p("int a(int v, int b, int c);");
+  p.generate_operations();
+  auto res = p.operations();
+
+  vector<string> expects{"<FUNCTION DECLARATION 3 >"};
+  test_scoreboard += handle_test_result(res, expects, p) ? 1 : 0;
+  }
+
+  return test_scoreboard==3;
 }
 
 
@@ -56,24 +82,12 @@ void run_test(const string name, auto f_obj){
 }
 
 
-void test_insert_space(){
-  Parser p("");
-
-  vector<pair<string,string>> example_seq = {{"int", "int"},{" ", " "}, {";" , ";"}};
-
-  p.insert_space(example_seq);
-
-  for (auto &a:example_seq){
-      cout << "first: " << a.first << " : " << a.second << endl;
-  }
-}
 
 int main(){
 
   run_test("variable", test_variable);
-  //run_test("function", test_function);
+  run_test("function", test_function);
 
-  test_insert_space();
 
   return 0;
 }
