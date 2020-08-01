@@ -92,7 +92,9 @@ class Lexer{
 
     void handle_special_case_token(token &all_tokens){
       const pair<string,string> merge_rule = {"int", "<NOT FOUND>"};
-      merge_tokens(all_tokens, merge_rule);
+      if (all_tokens.size() > 1){
+        merge_tokens(all_tokens, merge_rule);
+      }
     }
 
     void handle_token(string &msg, token &all_tokens){
