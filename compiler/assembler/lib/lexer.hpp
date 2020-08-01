@@ -78,24 +78,42 @@ class Lexer{
       return {ID_name, message};
     }
 
-    void handle_token(string &msg){
+    void merge_tokens(token &all_tokens, const pair<string,string> &rule){
+      for (size_t i=0; i<all_tokens.size()-1; i++){
+        if (all_tokens[i].first == rule.first &&
+            all_tokens[i+1].first == rule.second){
+          all_tokens[i].first =  rule.second;
+          all_tokens[i].second = string(rule.first) + string(all_tokens[i+1].second);
+          const auto it = all_tokens.begin();
+          all_tokens.erase(it+i+1);
+        }
+      }
+    };
+
+    void handle_special_case_token(token &all_tokens){
+      const pair<string,string> merge_rule = {"int", "<NOT FOUND>"};
+      merge_tokens(all_tokens, merge_rule);
+    }
+
+    void handle_token(string &msg, token &all_tokens){
       pair<string, string> item;
       if (not is_valid_identifier(msg,item)){
         item = handle_undefined_token(msg);
       }
       msg.erase(0, item.second.size());
-      local_token.push_back(item);
+      all_tokens.push_back(item);
     }
 
-    int tokenize(string msg){
+    int tokenize(string msg, token &all_tokens){
       int timeout = msg.size();
       while (msg.size()>0){
         if (not timeout--){
           cout << "KILLED\n";
           break;
         }
-        handle_token(msg);
+        handle_token(msg, all_tokens);
       }
+      handle_special_case_token(local_token);
       return SUCCESS;
     }
 
@@ -103,7 +121,7 @@ class Lexer{
   friend class Parser;
   public:
     Lexer(const string program_src) {
-      tokenize(program_src);
+      tokenize(program_src, local_token);
     }
 
 

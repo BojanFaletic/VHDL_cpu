@@ -15,7 +15,7 @@ template<typename T, typename U>
 bool handle_test_result(T &output, U &expected,
     Parser &p){
 
-  if (output[0] == expected[0]){
+  if (output == expected){
     return true;
   }
   else{
@@ -64,14 +64,34 @@ bool test_function(){
 
 
 bool test_variable(){
-  Parser p("int i=7;");
+  int test_scoreboard = 0;
+
+  {
+  Parser p("inti=7;");
   p.generate_operations();
   auto res = p.operations();
 
   const vector<string> expects{"<VARIABLE ASSIGNMENT>"};
 
-  return handle_test_result(res, expects, p);
+
+  test_scoreboard += handle_test_result(res, expects, p) ? 1 : 0;
+  }
+
+  /*
+  {
+  Parser p("int i=7; int j = 8;");
+  p.generate_operations();
+  auto res = p.operations();
+
+  const vector<string> expects{"<VARIABLE ASSIGNMENT>", "<VARIABLE ASSIGNMENT>"};
+
+  test_scoreboard += handle_test_result(res, expects, p) ? 1 : 0;
+  }
+*/
+
+  return test_scoreboard == 1;
 }
+
 
 
 void run_test(const string name, auto f_obj){
@@ -86,7 +106,7 @@ void run_test(const string name, auto f_obj){
 int main(){
 
   run_test("variable", test_variable);
-  run_test("function", test_function);
+  //run_test("function", test_function);
 
 
   return 0;

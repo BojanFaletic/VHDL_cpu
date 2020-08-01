@@ -50,10 +50,12 @@ class Parser {
     }
 
     bool is_variable_assignment(const vector<string> &t, string &expression_name){
-      const vector<vector<string>> assiment_seq{{"int", " ", "<NOT FOUND>", " ", "=", "<NUMBER>", ";"},
-                                                {"int", " ", "<NOT FOUND>", "=", "<NUMBER>", ";"}};
+      const vector<string> assiment_seq = {"int", " ", "<NOT FOUND>"," " ,"=", " ", "<NUMBER>", ";"};
       expression_name = "<VARIABLE ASSIGNMENT>";
-      return is_valid_expression(t, assiment_seq);
+      for (auto el:t){
+        cout << "debug:" << el << endl;
+      }
+      return is_vector_equal(t, assiment_seq);
     }
 
     int number_of_function_parameters(vector<string> &parameters){
@@ -64,7 +66,6 @@ class Parser {
       auto calculate_numer_of_elements = [&](int num_of_args){
         return parameter_template_one.size() + parameter_template_many.size()*(num_of_args-1);
       };
-
 
       if (is_vector_equal(parameters, parameter_template_one,0)){
         num_of_args++;
@@ -85,7 +86,6 @@ class Parser {
       }
       return 0;
     }
-
 
     bool is_function_declearation(vector<string> t, string &expression_name){
       const vector<vector<string>> assiment_seq_start{{"int", " ", "<NOT FOUND>", "("}};
@@ -113,13 +113,11 @@ class Parser {
       else{
         is_valid = false;
       }
-
       expression_name = "<FUNCTION DECLARATION ";
       expression_name += to_string(number_of_parameters);
       expression_name += " >";
       return is_valid;
     }
-
 
     int standardize_expression(){
       for (auto &expression:list_of_all_expressions){
@@ -132,8 +130,15 @@ class Parser {
       const string end_of_expression = ";";
       token single_expression;
 
-      for (const auto &expression : list_of_all_tokens){
-        single_expression.push_back(expression);
+      auto is_token_valid = [&single_expression](auto &expression){
+        if (single_expression.size() == 0 && expression.first==" ") return false;
+        return true;
+      };
+
+      for (const pair<string,string> &expression : list_of_all_tokens){
+        if (is_token_valid(expression)){
+          single_expression.push_back(expression);
+        }
         if (expression.first == end_of_expression){
           list_of_all_expressions.push_back(single_expression);
           single_expression.clear();
@@ -152,7 +157,7 @@ class Parser {
 
     bool is_not_check_rule(const pair<string,string> &token_ids, const token &rules){
       for (const pair<string, string> &rule:rules){
-        if (token_ids != rule){
+        if (token_ids.first != rule.first && token_ids.second != rule.second){
           return true;
         }
       }
@@ -161,10 +166,13 @@ class Parser {
 
 
     bool is_space_needed(pair<string, string> &current_pair, pair<string,string> &next_pair){
-      const token rules = {{" ", " "}};
+      const token rules_not = {{" ", " "}};
+      const token rule_is = {{"int", "<NOT FOUND>"}};
 
       const pair<string,string> rule_idx = {current_pair.first, next_pair.first};
-      return (!is_not_check_rule(rule_idx, rules));
+
+      //return (is_not_check_rule(rule_idx, rules_not) && !is_check_rule(rule_idx, rule_is));
+      return false;
     }
 
     bool is_exess_space(pair<string, string> &current_pair, pair<string,string> &next_pair){
@@ -178,11 +186,13 @@ class Parser {
 
       for (unsigned int idx = 0; idx < t.size()-1; idx++){
         if (is_space_needed(t[idx], t[idx+1])){
-          auto it = t.begin() + idx;
+          cout << "inserting space\n";
+          auto it = t.begin() + idx+1;
           t.insert(it, space_symbol);
           idx++;
         }
         if (is_exess_space(t[idx], t[idx+1])){
+          cout << "exes space found\n";
           auto it = t.begin() + idx;
           t.erase(it);
         }
