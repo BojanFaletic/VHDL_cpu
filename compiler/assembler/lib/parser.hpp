@@ -3,7 +3,6 @@
 #include <iostream>
 #include <array>
 #include <string>
-#include <experimental/array>
 #include <typeinfo>
 
 #include "function_parser.hpp"
@@ -19,7 +18,7 @@ typedef vector<pair<string,token>> operation;
 
 class Parser {
   private:
-    constexpr static auto delcerators = experimental::make_array("void", "int");
+    constexpr static auto declarator = make_array("void", "int");
 
     vector<token> expressions;
     operation operations;
@@ -32,9 +31,10 @@ class Parser {
     }
 
     bool is_variable_assignment(const vector<string> &t, string &expression_name){
-      const vector<string> assiment_seq = {"int", " ", "<NOT FOUND>"," " ,"=", " ", "<NUMBER>", ";"};
+      static constexpr auto assignment_seq =
+        make_array("int", " ", "<NOT FOUND>"," " ,"=", " ", "<NUMBER>", ";");
       expression_name = "<VARIABLE ASSIGNMENT>";
-      return Parser_utils::is_vector_equal(t, assiment_seq);
+      return Parser_utils::is_vector_equal(t, assignment_seq);
     }
 
     int standardize_expression(vector<token> &all_expressions){
@@ -99,7 +99,7 @@ class Parser {
       return (is_not_check_rule(rule_idx, rules_not) && !is_check_rule(rule_idx, rule_is));
     }
 
-    bool is_exess_space(pair<string, string> &current_pair, pair<string,string> &next_pair){
+    bool is_exes_space(pair<string, string> &current_pair, pair<string,string> &next_pair){
       const token rules = {{" ", " "}, {" ", ";"}};
       const pair<string,string> rule_idx = {current_pair.first, next_pair.first};
       return is_check_rule(rule_idx, rules);
@@ -114,7 +114,7 @@ class Parser {
           t.insert(it, space_symbol);
           idx++;
         }
-        if (is_exess_space(t[idx], t[idx+1])){
+        if (is_exes_space(t[idx], t[idx+1])){
           auto it = t.begin() + idx;
           t.erase(it);
         }
@@ -131,7 +131,7 @@ class Parser {
         if (is_variable_assignment(token_string, expression_buffer)){
           expression_name = expression_buffer;
         }
-        else if (Function_parser::is_function_declearation(token_string, expression_buffer)){
+        else if (Function_parser::is_function(token_string, expression_buffer)){
           expression_name = expression_buffer;
         }
         else{

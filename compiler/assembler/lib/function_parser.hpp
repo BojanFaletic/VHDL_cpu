@@ -1,76 +1,135 @@
 #pragma once
-
-#include <vector>
-#include <string>
-#include <array>
-#include <experimental/array>
-
 #include "parser_utils.hpp"
+#include <array>
+#include <iostream>
+#include <string>
+#include <vector>
 
 using namespace std;
 
-struct Function_parser : public Parser_utils{
-  static bool is_function_declearation(vector<string> t, string &expression_name){
-    const vector<vector<string>> assiment_seq_start{{"int", " ", "<NOT FOUND>", "("}};
-    const vector<vector<string>> assiment_seq_stop{{")", ";"}};
-    const size_t min_number_of_function_param = assiment_seq_start[0].size() + assiment_seq_stop[0].size();
+struct Function_parser : public Parser_utils {
+  s_auto decleration_start =
+      make_2d_array("int", " ", "<NOT FOUND>", " ", "(", " ");
+  s_auto decleration_stop = make_2d_array(")", ";");
+  s_auto definition_stop = make_2d_array(")", " ", "{");
+  s_const size_t min_size_of_t =
+      decleration_start[0].size() +
+      min(decleration_stop[0].size(), definition_stop[0].size());
 
-    bool is_valid;
-    if (t.size() < min_number_of_function_param){
+  s_auto one_f_param = make_array("int", " ", "<NOT FOUND>", " ");
+  s_auto many_f_param = make_array(",", " ", "int", " ", "<NOT FOUND>", " ");
+  s_auto f_body_end = make_array("}", ";");
+
+  s_const int function_definition = 1;
+  s_const int function_decleration = 2;
+  s_const int not_found = 0;
+
+  static string create_decleration_name(size_t param_size) {
+    return string("<FUNCTION DECLARATION ") + to_string(param_size) +
+           string(" >");
+  }
+
+  static string create_body_name(size_t param_size) {
+    return string("<FUNCTION BODY ") + to_string(param_size) + string(" >");
+  }
+
+  static int is_deceleration_or_definition(vector<string> &t) {
+    if (is_valid_expression(t, decleration_stop)) {
+      t.erase(t.begin(), t.begin() + decleration_stop[0].size());
+      return function_decleration;
+    } else if (is_valid_expression(t, definition_stop)) {
+      t.erase(t.begin(), t.begin() + definition_stop[0].size());
+      return function_definition;
+    }
+    return not_found;
+  }
+
+  static int is_function_head(vector<string> &t, size_t &num_of_args) {
+    if (is_valid_expression(t, decleration_start)) {
+      t.erase(t.begin(), t.begin() + decleration_start[0].size());
+      num_of_args = number_of_function_parameters(t);
+      return is_deceleration_or_definition(t);
+    }
+    return 0;
+  }
+
+  static bool is_function(vector<string> t, string &expression_name) {
+    if (t.size() < min_size_of_t) {
       return false;
     }
 
-    int number_of_parameters = 0;
-
-    if (is_valid_expression(t, assiment_seq_start)){
-      t.erase(t.begin(), t.begin()+assiment_seq_start[0].size());
-      number_of_parameters = number_of_function_parameters(t);
-
-      if (is_valid_expression(t, assiment_seq_stop)){
-        is_valid = true;
+    size_t number_of_parameters = -1;
+    int function_type = is_function_head(t, number_of_parameters);
+    if (function_type == not_found) {
+      return false;
+    } else if (function_type == function_decleration) {
+      expression_name = create_decleration_name(number_of_parameters);
+      return true;
+    } else if (function_type == function_definition) {
+      expression_name = create_body_name(number_of_parameters);
+      if (is_function_body_valid(t, false)) {
+        return true;
       }
-      else{
-        is_valid = false;
-      }
+      return false;
     }
-    else{
-      is_valid = false;
-    }
-    expression_name = "<FUNCTION DECLARATION ";
-    expression_name += to_string(number_of_parameters);
-    expression_name += " >";
-    return is_valid;
+    return false;
   }
 
-  static size_t calculate_numer_of_elements(int num_of_args, size_t size_of_one){
-    return size_of_one + size_of_one*(num_of_args-1);
+  static size_t calculate_numer_of_elements(int num_of_args) {
+    return one_f_param.size() + many_f_param.size() * (num_of_args - 1);
   };
 
-  static int number_of_function_parameters(vector<string> &parameters){
-    static constexpr auto parameter_template_one =
-      experimental::make_array("int", " ", "<NOT FOUND>");
-    static constexpr auto parameter_template_many =
-      experimental::make_array(",", " ", "int", " ", "<NOT FOUND>");
-
+  static int number_of_function_parameters(vector<string> &parameters) {
     int num_of_args = 0;
-
-    if (is_vector_equal(parameters, parameter_template_one,0)){
+    if (is_vector_equal(parameters, one_f_param, 0))
       num_of_args++;
-    }
-    else{
-      return 0;
-    }
 
-    for (size_t i=parameter_template_one.size(); i<parameters.size(); i+= parameter_template_many.size()){
-      if (is_vector_equal(parameters, parameter_template_many, i)){
+    for (size_t i = one_f_param.size(); i < parameters.size();
+         i += many_f_param.size()) {
+      if (is_vector_equal(parameters, many_f_param, i)) {
         num_of_args++;
-      }
-      else{
-        const size_t length = calculate_numer_of_elements(num_of_args, parameter_template_one.size());
-        parameters.erase(parameters.begin(), parameters.begin()+length);
+      } else {
+        const size_t length = calculate_numer_of_elements(num_of_args);
+        parameters.erase(parameters.begin(), parameters.begin() + length);
         return num_of_args;
       }
     }
     return 0;
+  }
+
+  static bool is_function_body_valid(vector<string> &t, bool is_function_void) {
+
+    bool start_of_braces = false;
+    bool end_of_braces = false;
+    bool is_return_found = false;
+
+    while (t.size() > 0) {
+      if (t.front() == "{") {
+        if (!start_of_braces) {
+          start_of_braces = true;
+        } else {
+          return false;
+        }
+      } else if (t.front() == "}") {
+        if (!end_of_braces) {
+          end_of_braces = true;
+        } else {
+          return false;
+        }
+      }
+
+      if (!is_return_found) {
+        is_return_found = is_vector_equal(t, f_body_end);
+      }
+
+      if (start_of_braces && end_of_braces && t.front() == ";") {
+        if (is_function_void)
+          return true;
+        else if (is_return_found)
+          return true;
+      }
+      t.erase(t.begin());
+    }
+    return true;
   }
 };
