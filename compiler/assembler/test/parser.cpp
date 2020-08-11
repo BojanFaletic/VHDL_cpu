@@ -25,15 +25,21 @@ bool handle_test_result(T &output, U &expected,
   }
 }
 
+template<typename T>
+void run_test(const string name, T f_obj){
+  const string res = f_obj() ? "SUCCESS" : "FAILED";
+  cout << "test " << name;
+  cout << " : " << res;
+  cout << endl;
+}
+
 bool test_function(){
   int test_scoreboard = 0;
-
 
   // test 1 argument
   {
   Parser p("int a(int v);");
-  p.generate_operations();
-  auto res = p.operations();
+  auto res = p.get_operations();
 
   vector<string> expects{"<FUNCTION DECLARATION 1 >"};
   test_scoreboard += handle_test_result(res, expects, p) ? 1 : 0;
@@ -42,8 +48,7 @@ bool test_function(){
   {
   // test 2 arguments
   Parser p("int a(int v, int b);");
-  p.generate_operations();
-  auto res = p.operations();
+  auto res = p.get_operations();
 
   vector<string> expects{"<FUNCTION DECLARATION 2 >"};
   test_scoreboard += handle_test_result(res, expects, p) ? 1 : 0;
@@ -52,13 +57,11 @@ bool test_function(){
   {
   // test 3 arguments
   Parser p("int a(int v, int b, int c);");
-  p.generate_operations();
-  auto res = p.operations();
+  auto res = p.get_operations();
 
   vector<string> expects{"<FUNCTION DECLARATION 3 >"};
   test_scoreboard += handle_test_result(res, expects, p) ? 1 : 0;
   }
-
   return test_scoreboard==3;
 }
 
@@ -67,9 +70,8 @@ bool test_variable(){
   int test_scoreboard = 0;
 
   {
-  Parser p("inti=7;");
-  p.generate_operations();
-  auto res = p.operations();
+  Parser p("int i=  7;");
+  auto res = p.get_operations();
 
   const vector<string> expects{"<VARIABLE ASSIGNMENT>"};
 
@@ -77,37 +79,45 @@ bool test_variable(){
   test_scoreboard += handle_test_result(res, expects, p) ? 1 : 0;
   }
 
-  /*
   {
   Parser p("int i=7; int j = 8;");
-  p.generate_operations();
-  auto res = p.operations();
+  auto res = p.get_operations();
 
   const vector<string> expects{"<VARIABLE ASSIGNMENT>", "<VARIABLE ASSIGNMENT>"};
 
   test_scoreboard += handle_test_result(res, expects, p) ? 1 : 0;
   }
-*/
 
-  return test_scoreboard == 1;
+  return test_scoreboard == 2;
 }
 
+bool test_random(){
+  Parser p("8 ");
+  auto res = p.get_operations();
+
+  const vector<string> expects{"<VARIABLE ASSIGNMENT>"};
+
+  return handle_test_result(res, expects, p);
+};
 
 
-void run_test(const string name, auto f_obj){
-  const string res = f_obj() ? "SUCCESS" : "FAILED";
-  cout << "test " << name;
-  cout << " : " << res;
-  cout << endl;
+bool test_fx(){
+  Parser p("int f(int a){int a=5; return a};");
+  auto res = p.get_operations();
+
+  const vector<string> expects{"<FUNCTION BODY 1 >"};
+
+  return handle_test_result(res, expects, p);
+
 }
-
-
 
 int main(){
 
-  run_test("variable", test_variable);
+  //run_test("variable", test_variable);
   //run_test("function", test_function);
+  //run_test("random", test_random);
 
+  run_test("f body", test_fx);
 
   return 0;
 }

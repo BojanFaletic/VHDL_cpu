@@ -6,21 +6,6 @@
 
 using namespace std;
 
-#define s_auto static constexpr auto
-#define s_const static constexpr
-
-// utility function, should be moved
-template <typename U, typename ...T>
-constexpr auto make_array(U first, T... args){
-  constexpr size_t size = sizeof...(args);
-  return array<U, size+1>{first, args...};
-}
-
-template <typename U, typename ...T>
-constexpr auto make_2d_array(U first, T... args){
-  return make_array(make_array(first, args...));
-}
-
 struct Parser_utils{
   template<typename T>
   static bool is_valid_expression(const vector<string> &expression,

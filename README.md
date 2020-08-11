@@ -39,6 +39,10 @@ Stack operations:
 POP <to_register>
 PUSH
 
+## ToDo
+* add immediate instructions
+* fetch decode cycle
+
 ## Register list ##
 
 R0 general register

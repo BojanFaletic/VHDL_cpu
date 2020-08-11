@@ -43,7 +43,9 @@ int main(){
 
   // expected function
   // test_definition();
-  Lexer l("inta = 7");
+  //Lexer l("inta = 7");
+  Lexer l("int a,");
+
   l.print_tokens();
 
   return 0;

@@ -27,7 +27,8 @@ struct mapping_t{
 */
 
 class Lexer{
-  static constexpr auto identifiers = experimental::make_array("void", "int", " ", "{", "}", "(", ")", ";", "<NUMBER>", "=", "+", "-", "*", "/", ",");
+  static constexpr auto identifiers = experimental::make_array("void", "int", " ", "{", "}", "(", ")", ";", 
+    "<NUMBER>", "=", "+", "-", "*", "/", ",", "return");
 
   protected:
     token local_token;

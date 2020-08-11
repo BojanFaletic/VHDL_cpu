@@ -1,9 +1,12 @@
 #pragma once
 #include "parser_utils.hpp"
+#include "utils.hpp"
+
 #include <array>
 #include <iostream>
 #include <string>
 #include <vector>
+
 
 using namespace std;
 
@@ -67,7 +70,7 @@ struct Function_parser : public Parser_utils {
       return true;
     } else if (function_type == function_definition) {
       expression_name = create_body_name(number_of_parameters);
-      if (is_function_body_valid(t, false)) {
+      if (is_function_body_valid(t)) {
         return true;
       }
       return false;
@@ -97,39 +100,13 @@ struct Function_parser : public Parser_utils {
     return 0;
   }
 
-  static bool is_function_body_valid(vector<string> &t, bool is_function_void) {
-
-    bool start_of_braces = false;
-    bool end_of_braces = false;
-    bool is_return_found = false;
-
-    while (t.size() > 0) {
-      if (t.front() == "{") {
-        if (!start_of_braces) {
-          start_of_braces = true;
-        } else {
-          return false;
-        }
-      } else if (t.front() == "}") {
-        if (!end_of_braces) {
-          end_of_braces = true;
-        } else {
-          return false;
-        }
-      }
-
-      if (!is_return_found) {
-        is_return_found = is_vector_equal(t, f_body_end);
-      }
-
-      if (start_of_braces && end_of_braces && t.front() == ";") {
-        if (is_function_void)
-          return true;
-        else if (is_return_found)
-          return true;
+  static bool is_function_body_valid(vector<string> &t) {
+    while (t.size() >= f_body_end.size()) {
+      if (is_vector_equal(t, f_body_end)){
+        return true;
       }
       t.erase(t.begin());
     }
-    return true;
+    return false;
   }
 };
