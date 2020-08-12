@@ -13,7 +13,7 @@
     R -> A
 
 * LOAD: <br>
-    A -> R
+    A -> R <br>
     C -> R
 
 * MATH (Aritmetic, logical): <br>
