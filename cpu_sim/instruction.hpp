@@ -26,10 +26,10 @@ const int CMP_EQ_RO = 9; //  if sum is equal R0
 const int CMP_GT_RO = 10; //  if sum is more  than R0
 
 // Jump
-const int JMP_LT = 11; // jump if CMP was successfull
-const int JMP_EQ = 12; // jump if CMP was successfull
-const int JMP_GT = 13; // jump if CMP was successfull
-const int JMP_N = 14; // jump if CMP was unsuccessfull
+const int JMP_LT = 11; // jump if CMP was successful
+const int JMP_EQ = 12; // jump if CMP was successful
+const int JMP_GT = 13; // jump if CMP was successful
+const int JMP_N = 14; // jump if CMP was unsuccessful
 
 
 #endif

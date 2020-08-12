@@ -21,11 +21,11 @@ END ENTITY ROM;
 ARCHITECTURE RTL OF ROM IS
   TYPE t_rom IS ARRAY(0 TO 2 ** ROM_WIDTH - 1) OF std_logic_vector(ROM_WIDTH - 1 DOWNTO 0);
   SIGNAL ROM : t_rom := (
-    LOAD_I_C & x"05",
-    LOAD_C & x"00",
-    ADD_I_C & x"01",
-    STORE_I_C & x"00",
-    JMP_C & x"00",  
+    LOAD_A_R0 & x"00",
+    LOAD_C_R1 & x"01",
+    ADD_R0_R1 & x"00",
+    STORE_R0_A & x"00",
+    JMP_N & x"00",  
     OTHERS => (OTHERS => '0'));
 BEGIN
 
